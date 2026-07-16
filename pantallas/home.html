@@ -1,0 +1,207 @@
+<html>
+  <head>
+    <title>My Website</title>
+  </head>
+  <body>
+    <header class="w-full bg-slate-900 text-white py-3 px-4 shadow-md border-b border-slate-800" role="toolbar" aria-label="Herramientas de accesibilidad">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-3">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                <i class="fa-solid fa-sliders"></i> Accesibilidad
+            </span>
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- Ajustes del tamaño de la fuente -->
+                <button onclick="changeFontSize(1)" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 transition-all" aria-label="Aumentar tamaño de letra">
+                    A<span class="text-[10px]">+</span>
+                </button>
+                <button onclick="changeFontSize(-1)" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 transition-all" aria-label="Disminuir tamaño de letra">
+                    A<span class="text-[10px]">-</span>
+                </button>
+                
+                <!-- Interruptor de Contraste -->
+                <button onclick="toggleContrast()" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5 transition-all" aria-label="Cambiar contraste de pantalla">
+                    <i class="fa-solid fa-circle-half-stroke"></i> Contraste
+                </button>
+
+                <!-- Interruptor de la Guía de Lectura -->
+                <button onclick="toggleReadingRuler()" id="ruler-btn" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5 transition-all" aria-label="Activar regla de lectura para guiar la vista">
+                    <i class="fa-solid fa-grip-lines"></i> Regla de Vista
+                </button>
+
+                <!-- Lector de Asistencia por Voz -->
+                <button onclick="toggleSpeechReader()" id="speech-btn" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5 transition-all" aria-label="Activar lector de asistencia por voz">
+                    <i class="fa-solid fa-volume-high"></i> Lector de Voz
+                </button>
+
+                <!-- Restablecer opciones -->
+                <button onclick="resetAccessibility()" class="bg-red-950/40 text-red-200 border border-red-900/40 hover:bg-red-900/40 text-xs px-3 py-1.5 rounded-lg font-medium flex items-center gap-1 transition-all" aria-label="Restablecer ajustes de accesibilidad">
+                    <i class="fa-solid fa-rotate-left"></i> Restablecer
+                </button>
+            </div>
+        </div>
+    </header>
+    <nav>
+      <ul>
+        <li><a href="home.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="contact.html">Contact</a></li>
+      </ul>
+    </nav>
+    <main>
+      <section>
+        <h2>About Us</h2>
+        <p>Welcome to our website! We are a company dedicated to providing excellent services.</p>
+      </section>
+    </main>
+    <footer>
+      <p>&copy; 2023 My Website. All rights reserved.</p>
+    </footer>
+
+    <script>
+        let currentFontScale = 100; // Porcentaje base de letra
+        const body = document.body;
+        const ruler = document.getElementById('reading-ruler');
+        let rulerActive = false;
+        let speechReaderActive = false;
+        let speechUtterance = null;
+
+        // Ajuste interactivo del tamaño de letra global
+        function changeFontSize(direction) {
+            currentFontScale += (direction * 10);
+            if (currentFontScale < 70) currentFontScale = 70;
+            if (currentFontScale > 160) currentFontScale = 160;
+            document.documentElement.style.fontSize = `${currentFontScale}%`;
+        }
+
+        // Activación del Modo de Alto Contraste
+        function toggleContrast() {
+            body.classList.toggle('high-contrast');
+        }
+
+        // Activación de la Regla / Guía de Lectura
+        function toggleReadingRuler() {
+            rulerActive = !rulerActive;
+            const btn = document.getElementById('ruler-btn');
+            if (rulerActive) {
+                ruler.style.display = 'block';
+                btn.classList.add('bg-teal-700', 'text-white');
+                btn.classList.remove('bg-slate-800');
+            } else {
+                ruler.style.display = 'none';
+                btn.classList.remove('bg-teal-700');
+                btn.classList.add('bg-slate-800');
+            }
+        }
+
+        // Activador del Lector de Asistencia Vocálica
+        function toggleSpeechReader() {
+            speechReaderActive = !speechReaderActive;
+            const btn = document.getElementById('speech-btn');
+            
+            if (speechReaderActive) {
+                btn.classList.add('bg-teal-700', 'text-white');
+                btn.classList.remove('bg-slate-800');
+                speakText("Lector de asistencia activado. Pase el cursor o enfoque cualquier elemento para escucharlo.");
+                setupSpeechEvents();
+            } else {
+                btn.classList.remove('bg-teal-700');
+                btn.classList.add('bg-slate-800');
+                if (window.speechSynthesis) {
+                    window.speechSynthesis.cancel();
+                }
+                removeSpeechEvents();
+            }
+        }
+
+        // Sintetizador nativo de Texto a Voz (Speech Synthesis API)
+        function speakText(text) {
+            if (!window.speechSynthesis) return;
+            window.speechSynthesis.cancel(); // Interrumpe cualquier locución activa previa
+            if (!text) return;
+            
+            speechUtterance = new SpeechSynthesisUtterance(text);
+            speechUtterance.lang = 'es-ES';
+            window.speechSynthesis.speak(speechUtterance);
+        }
+
+        // Controlador de enfoque para lectura por voz
+        function handleSpeechHover(e) {
+            if (!speechReaderActive) return;
+            e.stopPropagation();
+            
+            const target = e.currentTarget;
+            target.classList.add('reader-highlight');
+            
+            // Prioriza etiquetas descriptivas de accesibilidad (aria-label) antes que textos internos
+            let textToRead = target.getAttribute('aria-label') || target.innerText || target.textContent;
+            speakText(textToRead);
+        }
+
+        // Evento al quitar el cursor del elemento focalizado
+        function handleSpeechLeave(e) {
+            const target = e.currentTarget;
+            target.classList.remove('reader-highlight');
+            if (window.speechSynthesis) {
+                window.speechSynthesis.cancel();
+            }
+        }
+
+        // Vincular los eventos interactivos de locución de texto
+        function setupSpeechEvents() {
+            const elements = document.querySelectorAll('h1, h2, p, button, span');
+            elements.forEach(el => {
+                // Previene lectura redundante de la propia barra superior
+                if (!el.closest('header')) {
+                    el.addEventListener('mouseenter', handleSpeechHover);
+                    el.addEventListener('mouseleave', handleSpeechLeave);
+                    el.addEventListener('focus', handleSpeechHover);
+                    el.addEventListener('blur', handleSpeechLeave);
+                }
+            });
+        }
+
+        // Desvincular eventos interactivos de voz
+        function removeSpeechEvents() {
+            const elements = document.querySelectorAll('h1, h2, p, button, span');
+            elements.forEach(el => {
+                el.removeEventListener('mouseenter', handleSpeechHover);
+                el.removeEventListener('mouseleave', handleSpeechLeave);
+                el.removeEventListener('focus', handleSpeechHover);
+                el.removeEventListener('blur', handleSpeechLeave);
+                el.classList.remove('reader-highlight');
+            });
+        }
+
+        // Vincular movimiento físico de la regla de guía visual
+        window.addEventListener('mousemove', (e) => {
+            if (rulerActive) {
+                ruler.style.top = `${e.clientY}px`;
+            }
+        });
+
+        // Soporte táctil móvil para mover la regla visual
+        window.addEventListener('touchmove', (e) => {
+            if (rulerActive && e.touches.length > 0) {
+                ruler.style.top = `${e.touches[0].clientY}px`;
+            }
+        });
+
+        // Restablecer todas las configuraciones globales
+        function resetAccessibility() {
+            currentFontScale = 100;
+            document.documentElement.style.fontSize = '100%';
+            body.classList.remove('high-contrast');
+            
+            // Apagar la regla si está activa
+            rulerActive = true; 
+            toggleReadingRuler(); 
+            
+            // Detener el lector de voz
+            if (speechReaderActive) {
+                toggleSpeechReader();
+            }
+        }
+    </script>
+  </body>
+
+
+</html>
